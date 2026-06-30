@@ -177,6 +177,95 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     }
     .wa-float:hover { transform: scale(1.1) !important; }
 
+    body.popup-open {
+      overflow: hidden !important;
+    }
+    .info-popup-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(30,21,16,0.72);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 10001;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .info-popup-overlay.is-visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .info-popup-card {
+      width: min(100%, 460px);
+      background: linear-gradient(180deg, #FFF8F1 0%, #FFFFFF 100%);
+      border-radius: 28px;
+      padding: 32px 28px;
+      box-shadow: 0 24px 80px rgba(30,21,16,0.26);
+      position: relative;
+      transform: translateY(18px) scale(0.98);
+      transition: transform 0.3s ease;
+      border: 1px solid rgba(115,87,66,0.14);
+    }
+    .info-popup-overlay.is-visible .info-popup-card {
+      transform: translateY(0) scale(1);
+    }
+    .info-popup-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 38px;
+      height: 38px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(115,87,66,0.1);
+      color: #735742;
+      font-size: 1.4rem;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .info-popup-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #B98462;
+      margin-bottom: 16px;
+    }
+    .info-popup-title {
+      font-size: clamp(1.6rem, 4vw, 2rem);
+      line-height: 1.1;
+      color: #1E1410;
+      margin-bottom: 14px;
+    }
+    .info-popup-text {
+      font-size: 0.98rem;
+      line-height: 1.7;
+      color: #5C4A3A;
+    }
+    .info-popup-hours {
+      margin-top: 22px;
+      padding: 18px;
+      border-radius: 18px;
+      background: #F5F0E8;
+    }
+    .info-popup-hours strong {
+      display: block;
+      font-size: 0.9rem;
+      color: #1E1410;
+      margin-bottom: 10px;
+    }
+    .info-popup-hours p {
+      font-size: 0.95rem;
+      color: #5C4A3A;
+      line-height: 1.8;
+    }
+
     /* Gallery */
     .gallery-carousel { position: relative; }
     .gallery-viewport { overflow: hidden; }
@@ -510,8 +599,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       a.btn-outline-light {
         font-size: 0.91rem !important;
       }
+      .info-popup-overlay {
+        padding: 16px !important;
+      }
+      .info-popup-card {
+        padding: 28px 20px 22px !important;
+        border-radius: 22px !important;
+      }
     }
-    @media print { .wa-float { display: none !important; } }
+    @media print { .wa-float, .info-popup-overlay { display: none !important; } }
   </style>
 </helmet>
 
@@ -1307,6 +1403,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </div>
 </footer>
 
+<div class="info-popup-overlay" data-info-popup aria-hidden="true">
+  <div class="info-popup-card" role="dialog" aria-modal="true" aria-labelledby="popup-title-institucional">
+    <button type="button" class="info-popup-close" data-popup-close aria-label="Fechar aviso">&times;</button>
+    <span class="info-popup-kicker">Informacoes importantes</span>
+    <h2 id="popup-title-institucional" class="info-popup-title section-title">Atendimento particular</h2>
+    <p class="info-popup-text">N&atilde;o atendemos conv&ecirc;nio. Os atendimentos s&atilde;o realizados apenas de forma particular.</p>
+    <div class="info-popup-hours">
+      <strong>Horario de funcionamento</strong>
+      <p>Seg a sexta 09:00 at&eacute; ao 12:00<br>13:30 at&eacute; &agrave;s 18hrs</p>
+    </div>
+  </div>
+</div>
+
 
 <!-- FLOATING WHATSAPP BUTTON                       -->
 
@@ -1323,6 +1432,32 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
   componentDidMount() {
+    const popup = document.querySelector('[data-info-popup]');
+    if (popup) {
+      const closeButton = popup.querySelector('[data-popup-close]');
+      const closePopup = () => {
+        popup.classList.remove('is-visible');
+        popup.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('popup-open');
+      };
+
+      requestAnimationFrame(() => {
+        popup.classList.add('is-visible');
+        popup.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('popup-open');
+      });
+
+      closeButton?.addEventListener('click', closePopup);
+      popup.addEventListener('click', (event) => {
+        if (event.target === popup) closePopup();
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && popup.classList.contains('is-visible')) {
+          closePopup();
+        }
+      });
+    }
+
     // IntersectionObserver for scroll reveal
     const reveals = document.querySelectorAll('.reveal');
     if ('IntersectionObserver' in window) {
